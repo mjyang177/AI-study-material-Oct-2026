@@ -49,6 +49,10 @@ section { display: grid; gap: 18px; min-width: 0; scroll-margin-top: 20px; }
 .lead { color: var(--muted); }
 header.top { display: grid; gap: 12px; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.series { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 16px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.series b { font-size: 12px; color: var(--muted); font-weight: 500; }
+.series a { color: var(--accent); font-weight: 600; }
+.series span { font-size: 13px; color: var(--muted); }
 .chip { font-size: 0.78rem; border: 1px solid var(--line); background: var(--surface); border-radius: 4px; padding: 1px 8px; color: var(--muted); }
 code, pre { font-family: var(--f-mono); font-size: 0.84em; }
 :not(pre) > code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; word-break: break-word; }
@@ -135,6 +139,8 @@ footer ul { margin: 0; padding-left: 1.1em; }
 
 <div class="shell">
   <nav class="toc" aria-label="목차">
+    <span class="lbl">학습 노트</span>
+    <a href="erp-agent-lab-2026-10-07.html">다음 노트 · 10-07 ERP Agent Lab →</a>
     <span class="lbl">오늘의 실습</span>
     <a href="#map">과정 지도</a>
     <a href="#today">오늘 한 일</a>
@@ -169,6 +175,7 @@ footer ul { margin: 0; padding-left: 1.1em; }
         <span class="chip">Python: monthly_close_brief\.venv</span>
         <span class="chip">교재: class.axnode.kr</span>
       </div>
+      <p class="series"><b>다음 노트</b><a href="erp-agent-lab-2026-10-07.html">2026-10-07 · ERP Agent Lab 학습 노트 →</a><span>수금 대사 · 통제 테스트 · 경비 분류 · AgentHub · Computer Use</span></p>
     </header>
 
     <!-- 1 과정 지도 -->

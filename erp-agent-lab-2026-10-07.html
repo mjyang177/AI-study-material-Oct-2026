@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ERP Agent Lab 학습 노트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Nanum+Myeongjo:wght@700;800&display=swap">
+<style>
+/* Layout: 장부(ledger) 노트 — 왼쪽 고정 목차 + 오른쪽 본문 한 줄기, 모듈마다 교재 장 번호를 꼬리표로 단다 */
+:root{
+  --paper:#F5F7F4; --sheet:#FFFFFF; --ink:#1C2420; --muted:#5E6B64; --rule:#D9E0DA;
+  --ledger:#2E6A4F; --ledger-soft:#E3EEE7; --debit:#A8432B; --debit-soft:#F6E5DF; --amber:#8A6414; --amber-soft:#F5ECD6;
+  --f-display:"Nanum Myeongjo", "Batang", serif;
+  --f-body:"IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121714; --sheet:#1A211D; --ink:#E4EAE6; --muted:#9AA8A0; --rule:#2C3631;
+  --ledger:#7CC4A0; --ledger-soft:#1F3229; --debit:#E58C72; --debit-soft:#3A231C; --amber:#D9B25E; --amber-soft:#332A15;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --paper:#121714; --sheet:#1A211D; --ink:#E4EAE6; --muted:#9AA8A0; --rule:#2C3631;
+  --ledger:#7CC4A0; --ledger-soft:#1F3229; --debit:#E58C72; --debit-soft:#3A231C; --amber:#D9B25E; --amber-soft:#332A15;
+  color-scheme:dark;}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.75 var(--f-body);
+  padding-inline:20px;padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+
+/* 목차 */
+.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-block:40px;font-size:13px}
+.toc b{display:block;font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:4px;color:var(--ink);text-decoration:none}
+.toc a span{font-family:var(--f-mono);color:var(--muted);min-width:2.2em}
+.toc a:hover,.toc a:focus-visible{background:var(--ledger-soft);outline:none}
+
+main{min-width:0;padding-block:40px}
+header.hero{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:8px}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--ledger);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,4.4vw,42px);line-height:1.25;margin:8px 0 12px;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.meta code{font-family:var(--f-mono);color:var(--ink)}
+.lede{max-width:66ch;margin:16px 0 0}
+
+h2{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.35;margin:0;text-wrap:balance}
+h3{font-size:15px;margin:22px 0 6px}
+section{padding-block:36px;border-bottom:1px solid var(--rule)}
+section > p, section > ul, section > ol{max-width:68ch}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;margin-bottom:14px}
+.num{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.tag{font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;background:var(--ledger-soft);color:var(--ledger);white-space:nowrap}
+
+/* 흐름 */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:18px;counter-reset:s}
+.flow a{display:block;text-decoration:none;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;font-size:13px;line-height:1.5}
+.flow a:hover,.flow a:focus-visible{border-color:var(--ledger);outline:none}
+.flow a::before{counter-increment:s;content:counter(s);display:block;font-family:var(--f-mono);color:var(--ledger);font-size:12px;margin-bottom:4px}
+.flow small{display:block;color:var(--muted);margin-top:4px}
+
+/* 결과 숫자 줄 */
+.figs{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--rule);border-radius:6px;background:var(--sheet);margin:16px 0}
+.figs div{flex:1 1 160px;padding:12px 16px;border-right:1px solid var(--rule)}
+.figs div:last-child{border-right:0}
+.figs dt{font-size:12px;color:var(--muted)}
+.figs dd{margin:2px 0 0;font-family:var(--f-mono);font-size:17px;font-variant-numeric:tabular-nums}
+
+/* 배운 점 / 주의 */
+.lesson{border-left:3px solid var(--ledger);background:var(--ledger-soft);padding:12px 16px;border-radius:0 6px 6px 0;margin:16px 0;max-width:68ch}
+.lesson b{color:var(--ledger)}
+.warn{border-left-color:var(--debit);background:var(--debit-soft)}
+.warn b{color:var(--debit)}
+
+/* 표 */
+.tbl{overflow-x:auto;margin:12px 0;border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+th{font-size:12px;color:var(--muted);font-weight:500;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{font-size:11.5px;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.ok{background:var(--ledger-soft);color:var(--ledger)}
+.bad{background:var(--debit-soft);color:var(--debit)}
+.hold{background:var(--amber-soft);color:var(--amber)}
+
+code,kbd{font-family:var(--f-mono);font-size:.9em}
+p code, li code, td code{background:var(--paper);border:1px solid var(--rule);padding:0 4px;border-radius:3px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;min-width:0}
+.card h3{margin-top:0}
+.card p{margin:0;font-size:14px}
+
+/* 원칙 */
+.principles{list-style:none;padding:0;margin:0;display:grid;gap:0;max-width:none}
+.principles li{display:grid;grid-template-columns:2.4em minmax(0,1fr);gap:8px;padding:14px 0;border-bottom:1px dashed var(--rule)}
+.principles li:last-child{border-bottom:0}
+.principles .k{font-family:var(--f-mono);color:var(--ledger)}
+.principles strong{display:block}
+.principles span{color:var(--muted);font-size:14px}
+
+dl.gloss{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--rule);margin:0}
+dl.gloss dt{font-weight:700;padding-right:12px}
+@media (max-width:520px){dl.gloss{grid-template-columns:minmax(0,1fr)}dl.gloss dt{border-bottom:0;padding-bottom:0}}
+
+.todo{list-style:none;padding:0;margin:0;display:grid;gap:8px;max-width:none}
+.todo li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:10px 14px}
+.todo .pill{margin-top:3px}
+footer{padding-top:28px;font-size:12.5px;color:var(--muted)}
+a{color:var(--ledger)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="toc" aria-label="목차">
+  <b>목차</b>
+  <ol>
+    <li><a href="#flow"><span>00</span>오늘의 흐름</a></li>
+    <li><a href="#catalog"><span>01</span>데이터 카탈로그</a></li>
+    <li><a href="#collect"><span>02</span>AI 수금 대사</a></li>
+    <li><a href="#skill"><span>03</span>프롬프트 → 스킬</a></li>
+    <li><a href="#control"><span>04</span>통제 테스트</a></li>
+    <li><a href="#expense"><span>05</span>AI 경비 분류</a></li>
+    <li><a href="#hub"><span>06</span>AgentHub</a></li>
+    <li><a href="#cu"><span>07</span>Computer Use</a></li>
+    <li><a href="#principles"><span>08</span>관통하는 원칙</a></li>
+    <li><a href="#prompt"><span>09</span>프롬프트 설계법</a></li>
+    <li><a href="#gloss"><span>10</span>용어 정리</a></li>
+    <li><a href="#next"><span>11</span>남은 과제</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">제4기 삼일 AI재무아카데미 · 실습 복습</div>
+  <h1>ERP Agent Lab 학습 노트</h1>
+  <div class="meta">
+    <span>2026-10-07</span>
+    <span>좌석 <code>stu24</code></span>
+    <span>회사 <code>1000</code> 오로라코리아(주)</span>
+    <span>Claude 데스크톱 + ERP 커넥터 + 내장 브라우저</span>
+  </div>
+  <p class="lede">오늘은 Aurora Group 모의 ERP에 Claude를 커넥터(MCP)로 붙여 수금 대사, 통제 테스트, 경비 분류를 직접 돌렸습니다. 이어서 같은 일을 회사가 통제하는 방식(AgentHub)과 화면을 직접 읽는 방식(Computer Use)으로 살펴봤습니다. 이 노트는 각 실습의 결과 숫자와 거기서 얻은 판단 기준을 교재 장 번호에 맞춰 정리한 것입니다.</p>
+</header>
+
+<section id="flow">
+  <div class="sec-head"><span class="num">00</span><h2>오늘의 흐름</h2></div>
+  <p>데이터를 먼저 파악하고, AI에게 판단을 맡기고, 마지막으로 그 판단을 회사가 어떻게 통제하는지 본 순서입니다.</p>
+  <div class="flow">
+    <a href="#catalog">데이터 카탈로그 파악<small>교재 5 · 12장</small></a>
+    <a href="#collect">AI 수금 대사<small>교재 7-2 · 7-3</small></a>
+    <a href="#skill">프롬프트를 스킬로<small>재사용 설계</small></a>
+    <a href="#control">FR01 통제 테스트<small>교재 4-1 · 5-2</small></a>
+    <a href="#expense">AI 경비 분류·기표<small>교재 8-3 · 8-4</small></a>
+    <a href="#hub">Policy · Hook · MCP<small>교재 10장</small></a>
+    <a href="#cu">홈택스 화면 읽기<small>교재 11-2 · 11-3</small></a>
+  </div>
+</section>
+
+<section id="catalog">
+  <div class="sec-head"><span class="num">01</span><h2>데이터 카탈로그 — 무엇이 어디 있는가</h2><span class="tag">교재 5-1 · 12장</span></div>
+  <p><code>erp_get_data_catalog</code>와 <code>erp_list_datasets</code>로 커넥터가 볼 수 있는 표를 영역별로 정리했습니다.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>영역</th><th>테이블</th><th class="n">건수</th></tr></thead>
+    <tbody>
+      <tr><td>원장</td><td><code>journal_entry</code> 전표 헤더 · <code>journal_line</code> 분개라인</td><td class="n">17 · 51</td></tr>
+      <tr><td>원천</td><td><code>hometax_invoice</code> · <code>bank_tx</code> · <code>card_tx</code> · <code>evidence</code></td><td class="n">34 · 39 · 60 · 6</td></tr>
+      <tr><td>거래</td><td><code>sales_order</code> · <code>purchase_order</code> · <code>inventory</code> · <code>payroll</code> · <code>collect_match</code></td><td class="n">6 · 12 · 14 · 28 · 0</td></tr>
+      <tr><td>기준정보</td><td><code>account</code> 계정과목 · <code>partner</code> 거래처 · <code>employee</code> 사원</td><td class="n">48 · 27 · 14</td></tr>
+      <tr><td>통제</td><td><code>erp_user</code> · <code>role_grant</code> · <code>rcm</code> · <code>audit_log</code></td><td class="n">11 · 14 · 8 · 0</td></tr>
+    </tbody>
+  </table></div>
+  <p>원본 표 19개 외에 <code>je_lines</code>, <code>invoice_flow</code>, <code>card_expense</code>, <code>user_activity</code> 등 미리 결합해 둔 변환 데이터셋이 7개 있습니다. 원장을 직접 조인하기 전에 이 데이터셋부터 봅니다.</p>
+  <div class="lesson"><b>배운 점</b> — 건수가 0인 표는 그 자체로 발견입니다. 처음에 <code>collect_match</code>(수금 대사 이력)와 <code>audit_log</code>(감사로그)가 비어 있었고, 이 공백은 뒤의 통제 테스트에서 승인일시를 확인할 수 없는 원인으로 다시 나타났습니다.</div>
+</section>
+
+<section id="collect">
+  <div class="sec-head"><span class="num">02</span><h2>AI 수금 대사 — 적요와 금액으로 짝짓기</h2><span class="tag">교재 7-2 · 7-3</span></div>
+  <p><code>erp_get_collect_workspace</code>로 미수 매출전표 13건과 미처리 입금 20건을 받아, 어느 입금이 어느 채권의 회수인지 판단했습니다. ERP는 짝을 골라 주지 않습니다. 사람이 판단하던 이 자리가 Agent를 붙일 자리입니다.</p>
+  <div class="figs" role="list">
+    <div role="listitem"><dt>대사 쌍</dt><dd>8쌍 / 계산서 10건</dd></div>
+    <div role="listitem"><dt>회수액</dt><dd>27,030,178,244</dd></div>
+    <div role="listitem"><dt>부분 반제 · 선수금</dt><dd>0 · 0</dd></div>
+    <div role="listitem"><dt>판단 보류 입금</dt><dd>12건</dd></div>
+  </div>
+  <h3>1:n 매칭 — 꼭 찾아야 했던 건</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>계산서</th><th>품목</th><th class="n">미수액</th></tr></thead>
+    <tbody>
+      <tr><td>#24 마실커머스</td><td>더마 리페어 세럼 (SPO-0001)</td><td class="n">576,576,000</td></tr>
+      <tr><td>#26 마실커머스</td><td>더마 카밍 크림 (SPO-0002)</td><td class="n">576,576,000</td></tr>
+      <tr><td>#28 마실커머스</td><td>더마 배리어 로션 (SPO-0003)</td><td class="n">480,480,000</td></tr>
+      <tr><td colspan="2"><b>입금 #22</b> "7월 1~3차 통합 결제"</td><td class="n"><b>1,633,632,000</b></td></tr>
+    </tbody>
+  </table></div>
+  <h3>판단 보류로 남긴 기준</h3>
+  <ul>
+    <li>입금일이 계산서 발행일보다 빠르면 그 계산서의 회수로 보지 않음 (입금 #27, #1)</li>
+    <li>한 계산서에 후보 입금이 둘이면 금액이 정확한 쪽을 쓰고 나머지는 보류 (뷰티메가마트 #23 정확 / #38은 156,144원 부족)</li>
+    <li>수주번호만 있고 계산서가 없는 입금은 선수금 후보 (#25, #26)</li>
+    <li>예금이자는 매출채권이 아님 (#14)</li>
+  </ul>
+  <div class="lesson"><b>배운 점</b> — 적요에 적힌 거래처 이름은 참고 정보일 뿐입니다. 모회사 대납, 계열사 통합결제, 예금주가 다른 경우가 있기 때문입니다. 짝을 정하는 1차 근거는 금액이고, 적요는 그 판단을 뒷받침하는 정황입니다. 확신이 없으면 대사하지 않는 것이 맞는 결론입니다.</div>
+  <div class="lesson warn"><b>실행 방식</b> — 승인을 받은 뒤 쌍마다 <code>erp_collect_match</code>를 따로 호출하고, 대사일은 각 입금일로 넣었습니다. 여러 쌍을 한 번에 넘기면 금액이 섞여 의도하지 않은 부분 반제나 선수금이 생길 수 있습니다.</div>
+</section>
+
+<section id="skill">
+  <div class="sec-head"><span class="num">03</span><h2>프롬프트를 스킬로 만들기</h2><span class="tag">재사용</span></div>
+  <p>수금 대사 프롬프트를 <code>.claude/skills/ar-collect-match/SKILL.md</code>로 저장했습니다. <code>/ar-collect-match</code>로 부르거나 "수금 대사해줘"라고 말하면 자동으로 쓰입니다.</p>
+  <div class="cols">
+    <div class="card"><h3>원래 프롬프트에 있던 것</h3><p>역할, 사용할 도구, 짝짓기 기준, 근거 표 양식, 승인 후 실행, 결과 보고 항목, 판단 보류 규칙</p></div>
+    <div class="card"><h3>실습하면서 덧붙인 것</h3><p>입금일과 발행일 선후 확인, 후보 입금이 둘일 때의 처리, 쌍별 개별 호출, 대사일을 입금일로 넣기, 반제·선수금이 없을 때도 "없음"이라고 쓰기</p></div>
+  </div>
+  <div class="lesson"><b>배운 점</b> — 한 번 돌려 본 실제 판단이 스킬을 더 좋게 만듭니다. 프롬프트는 처음 쓴 그대로 굳히지 말고, 실행하면서 부딪힌 경계 사례를 규칙으로 옮겨 적습니다.</div>
+</section>
+
+<section id="control">
+  <div class="sec-head"><span class="num">04</span><h2>통제 테스트 — FR01-P01-R01-01</h2><span class="tag">교재 4-1 · 5-2</span></div>
+  <p>통제는 "모든 수동전표는 작성자와 다른 권한보유자가 승인한 후 전기된다"입니다. 매건 수행하는 예방통제이고 핵심통제입니다.</p>
+  <div class="figs" role="list">
+    <div role="listitem"><dt>모집단</dt><dd>16건</dd></div>
+    <div role="listitem"><dt>표본</dt><dd>16건 (전수)</dd></div>
+    <div role="listitem"><dt>예외</dt><dd>1건 · 6.25%</dd></div>
+    <div role="listitem"><dt>결론</dt><dd>비효과적</dd></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>속성</th><th>결과</th><th>근거</th></tr></thead>
+    <tbody>
+      <tr><td>① 작성자 ≠ 승인자</td><td><span class="pill bad">예외 1</span></td><td>전표 #12 컨설팅 수수료 3,300,000원 — 이재무가 작성과 승인을 혼자 함</td></tr>
+      <tr><td>② 승인자 권한 보유</td><td><span class="pill ok">형식상 충족</span></td><td>이재무·이부장(재무)의 승인권한은 임시로 받은 뒤 회수되지 않은 권한</td></tr>
+      <tr><td>③ 승인일 ≥ 기표일</td><td><span class="pill hold">확인 불가 16</span></td><td>전표에 승인일시 칸이 없고, 감사로그에도 승인 기록이 없음</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>표본 25건을 요청했지만 모집단이 16건이라 금액 상위·무작위 두 방식 모두 16건을 돌려줬습니다. 그래서 전수 테스트를 했고 표본 위험은 없습니다.</li>
+    <li>통제는 "수동전표"가 대상인데 모집단에는 시스템에서 넘어온 전표 11건도 들어 있었습니다. 수동전표 5건만 보면 예외율은 20%입니다.</li>
+    <li>그 밖에 조회 권한만 있는 노물류가 전표 #13을 작성했고, 실제 사람을 알 수 없는 "seed" 계정이 작성한 전표가 6건 있었습니다.</li>
+  </ul>
+  <div class="lesson"><b>배운 점</b> — "확인 불가"는 실패가 아니라 결론입니다. 통제기술서가 요구하는 증거(승인일시)를 시스템이 남기지 않는다면, 그것을 통제 설계의 미비로 보고합니다. 근거 없이 "적정"이라고 쓰지 않습니다.</div>
+</section>
+
+<section id="expense">
+  <div class="sec-head"><span class="num">05</span><h2>AI 경비 분류 — 용도가 계정을 가른다</h2><span class="tag">교재 8-3 · 8-4</span></div>
+  <p>수집완료 법인카드 60건을 계정과목표의 keywords로 분류해 승인을 받고, 전표 #20~#79로 건별 기표했습니다. 모든 호출에 <code>source_type="card"</code>와 <code>source_id</code>를 넣어 원천이 전표완료로 바뀌게 했습니다. 이것이 중복 기표를 막는 장치입니다.</p>
+  <div class="figs" role="list">
+    <div role="listitem"><dt>생성 전표</dt><dd>60건 (미결)</dd></div>
+    <div role="listitem"><dt>253 미지급금</dt><dd>15,421,000</dd></div>
+    <div role="listitem"><dt>135 부가세대급금</dt><dd>1,101,990</dd></div>
+    <div role="listitem"><dt>거부</dt><dd>0건</dd></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>같은 가맹점·업종이라도</th><th>용도</th><th>계정</th></tr></thead>
+    <tbody>
+      <tr><td>롯데호텔 서울 (호텔)</td><td>거래처 접대 식사</td><td><b>813 접대비</b> — 숙박이라고 812로 보내지 않음</td></tr>
+      <tr><td>스크린골프존 (골프연습장)</td><td>거래처 접대</td><td>813 접대비</td></tr>
+      <tr><td>아웃백·배달의민족·CU</td><td>팀 회식·야근 식대·간식</td><td>811 복리후생비</td></tr>
+      <tr><td>한화리조트 (숙박)</td><td>사내 워크숍</td><td>811 복리후생비 — keyword상으로는 812라 판단이 필요</td></tr>
+      <tr><td>하이패스</td><td>고속도로 통행료</td><td>822 차량유지비 — 교통비가 아님</td></tr>
+      <tr><td>애플코리아</td><td>업무용 노트북</td><td>212 비품 (자산)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="lesson"><b>배운 점</b> — 영수증만 봐서는 계정이 갈리지 않습니다. 같은 식당 결제라도 직원끼리면 복리후생비, 거래처와 함께면 접대비입니다. 그래서 Agent가 어떤 근거(가맹점, 업종, 용도)로 계정을 골랐는지 표에 남기게 했습니다.</div>
+  <div class="lesson warn"><b>세무 판단</b> — 법인차량이 비영업용 승용차라면 주유비 부가세 48,820원은 매입세액을 공제받을 수 없습니다. 접대비는 원래 공제 대상이 아닌데, 이번 건들은 부가세가 0이라 문제가 없었습니다. keyword 규칙만으로는 이런 세무 판단을 할 수 없습니다.</div>
+</section>
+
+<section id="hub">
+  <div class="sec-head"><span class="num">06</span><h2>AgentHub — 약속을 통제로 바꾸는 자리</h2><span class="tag">교재 10장</span></div>
+  <p>오늘 오전의 Agent는 내 PC의 Claude가 판단하고, 제가 대화창에서 승인하는 방식이었습니다. "승인 전에는 실행하지 않는다"는 프롬프트에 적은 약속일 뿐이었습니다. Hub는 같은 도구를 쓰되, 회사가 도구 호출 하나하나를 판정하도록 실행 흐름을 회사 쪽에 둡니다.</p>
+  <div class="cols">
+    <div class="card"><h3>MCP · 연결 범위</h3><p>어느 시스템의 어떤 도구를 쓸 수 있는가. 허용 Tool 목록이 가장 중요한 통제이고, 등록에는 2인 승인이 필요합니다.</p></div>
+    <div class="card"><h3>Hook · 호출마다 검사</h3><p>실행 전에는 분개 줄 형식, 기간 잠금, 위험한 셸 인자를 막습니다. 실행 후에는 계정과목표에 없는 계정 사용과 빈 결과를 잡습니다.</p></div>
+    <div class="card"><h3>Policy · 위험 등급</h3><p>L1은 차단, L2는 사람 승인, L3는 경고입니다. 예: 확정 전표 합계 5천만원 이상, 대형 자금 이동 1천만원 이상이면 L2.</p></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>오늘 한 작업</th><th>Hub였다면</th></tr></thead>
+    <tbody>
+      <tr><td>수금 대사 8건 (건당 2.75억~135억)</td><td>대형 자금 이동 확인(L2)에 걸려 8건 모두 승인함으로 갔을 것</td></tr>
+      <tr><td>카드 전표 60건 (합계 1,542만원)</td><td>5천만원 임계에 못 미쳐 통과. 분개 줄 형식 검사와 비실계정 검사도 통과</td></tr>
+      <tr><td>6~7월 날짜로 기표</td><td>6월이 마감됐다면 기간 잠금 Hook에 걸렸을 것. 오늘은 마감 여부를 확인하지 않음</td></tr>
+      <tr><td>커넥터 도구 100여 개를 모두 쓸 수 있는 상태</td><td>수금 Agent에는 대사 도구만 허용. 승인·지급·삭제 계열 도구는 막음</td></tr>
+    </tbody>
+  </table></div>
+  <div class="lesson"><b>배운 점</b> — Agent도 ERP 사용자이므로 ITGC의 대상입니다. 접근권한은 허용 도구와 허용 법인으로, 변경관리는 버전과 2인 승인으로, 운영은 실행 이력과 감사 기록으로 관리합니다. 개인 PC에서 도는 Agent는 아무리 잘 만들어도 회사 자산이 아니라 개인기입니다.</div>
+</section>
+
+<section id="cu">
+  <div class="sec-head"><span class="num">07</span><h2>Computer Use — 화면을 읽는 AI</h2><span class="tag">교재 11-2 · 11-3</span></div>
+  <p>홈택스처럼 쓸 수 있는 API가 없는 사이트는 화면을 열어 읽어야 합니다. 내장 브라우저로 모의 홈택스를 열어 회사 1000, 2026-06-01~07-31 기간을 조회했습니다.</p>
+  <ol>
+    <li>첫 조회는 0건이었습니다. 좌석에 로그인하지 않으면 조회할 수 없기 때문입니다. 어느 좌석이 본인 것인지 AI가 알 수 없으므로 사용자가 직접 24번 좌석을 골랐습니다.</li>
+    <li>다시 조회하니 34건이 나왔습니다 (매출 13, 매입 21). 화면 글자를 그대로 가져와서 잘린 행 없이 읽은 건수와 화면 건수가 같았습니다.</li>
+    <li>매출 13건은 수금 대사 때 본 ERP 계산서와 승인번호·금액이 모두 일치했습니다.</li>
+  </ol>
+  <div class="lesson warn"><b>발견</b> — 홈택스에는 삼일회계법인 계산서(07-04, 공급가액 25,000,000)가 발행되어 있습니다. 그런데 ERP 전표 #7은 같은 거래처를 "세금계산서 미수취"로 표시하고 06-26에 5,500,000원으로 기표했습니다. 3-way 대사에서 다시 확인할 항목입니다.</div>
+  <div class="lesson"><b>배운 점</b> — 화면에서 읽은 값은 검증할 대상이고, API로 얻은 값이 정답지입니다. 안 보이는 값을 그럴듯하게 채우지 않고 "확인 불가"로 남깁니다. 로그인이나 좌석 선택처럼 계정이 걸린 단계는 사람이 직접 합니다.</div>
+</section>
+
+<section id="principles">
+  <div class="sec-head"><span class="num">08</span><h2>오늘을 관통하는 원칙</h2></div>
+  <ul class="principles">
+    <li><span class="k">P1</span><div><strong>AI가 판단하고, 실행은 승인 후에</strong><span>근거 표를 먼저 보여 주고 승인을 받은 뒤 쓰기 도구를 호출합니다. 회사 환경에서는 이 약속을 Policy L2로 강제합니다.</span></div></li>
+    <li><span class="k">P2</span><div><strong>절차 → 데이터 → 도구</strong><span>무슨 일을 하려는지에서 출발해 필요한 정보와 그 정보가 있는 테이블을 정하고, 그다음에 도구를 정합니다. 반대 방향으로 가면 필요한 것이 빠진 도구가 나옵니다.</span></div></li>
+    <li><span class="k">P3</span><div><strong>확신이 없으면 보류, 증거가 없으면 확인 불가</strong><span>보류한 건과 그 이유를 결과의 일부로 보고합니다.</span></div></li>
+    <li><span class="k">P4</span><div><strong>이름보다 금액, 가맹점보다 용도</strong><span>적요의 이름은 거래처를 확정하지 않고, 업종은 계정을 확정하지 않습니다.</span></div></li>
+    <li><span class="k">P5</span><div><strong>원천을 연결하면 중복을 시스템이 막는다</strong><span><code>source_type</code>과 <code>source_id</code>를 넘기면 원천이 전표완료로 바뀌어 두 번 기표할 수 없습니다.</span></div></li>
+    <li><span class="k">P6</span><div><strong>작성과 승인을 분리한다 — Agent에게도</strong><span>통제 테스트에서 찾은 예외(자기 승인)는 Agent 설계에도 그대로 적용됩니다. 전표를 만든 Agent가 승인 도구까지 가지면 안 됩니다.</span></div></li>
+  </ul>
+</section>
+
+<section id="prompt">
+  <div class="sec-head"><span class="num">09</span><h2>잘 동작한 프롬프트의 구조</h2></div>
+  <p>오늘 쓴 실습 프롬프트 세 개는 모두 같은 뼈대를 가졌습니다. 새 업무를 Agent에 맡길 때 이 순서로 쓰면 됩니다.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>요소</th><th>역할</th><th>수금 대사에서는</th></tr></thead>
+    <tbody>
+      <tr><td>역할</td><td>판단 기준의 관점을 정함</td><td>"너는 ERP의 수금 담당자다"</td></tr>
+      <tr><td>도구와 순서</td><td>무엇을 어떤 순서로 부를지</td><td>작업 자료 조회 → 짝짓기 → 대사</td></tr>
+      <tr><td>판단 기준</td><td>현업의 경험칙을 명시</td><td>적요의 이름은 확정 근거가 아님, 1:n 조합을 반드시 찾기</td></tr>
+      <tr><td>근거 표 양식</td><td>판단을 검토할 수 있게 함</td><td>계산서번호 / 거래처 / 미수액 / 입금번호 / 입금액 / 판단 근거</td></tr>
+      <tr><td>승인 게이트</td><td>쓰기 전에 멈춤</td><td>"내가 승인하면 erp_collect_match로"</td></tr>
+      <tr><td>보고 항목</td><td>놓치기 쉬운 결과를 지정</td><td>새 전표번호, 선수금 금액</td></tr>
+      <tr><td>보류 규칙</td><td>모를 때 할 일</td><td>"확신이 없는 건은 판단 보류로 남겨라"</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="gloss">
+  <div class="sec-head"><span class="num">10</span><h2>용어 정리</h2></div>
+  <dl class="gloss">
+    <dt>대사(對査)</dt><dd>두 기록을 맞춰 보는 일. 오늘은 입금↔채권, 홈택스↔ERP 대사를 했습니다.</dd>
+    <dt>부분 반제</dt><dd>채권 일부만 갚은 경우. 남은 금액은 새 매출전표 번호로 넘어가 다시 수금 대상이 됩니다.</dd>
+    <dt>선수금</dt><dd>채권보다 더 받은 돈. 다음 수금 때 쓸 수 있는 잔액으로 남습니다.</dd>
+    <dt>모집단 · 표본</dt><dd>통제를 적용받는 전체 건과, 그중 테스트할 건. 모집단이 표본 크기보다 작으면 전수 테스트합니다.</dd>
+    <dt>속성(test attribute)</dt><dd>표본마다 확인할 항목. RCM의 <code>test_attr</code>에 적혀 있습니다.</dd>
+    <dt>예외(deviation)</dt><dd>속성을 충족하지 못한 건. 매건 수행하는 핵심통제에서는 1건만 나와도 통제가 비효과적입니다.</dd>
+    <dt>SoD (직무분리)</dt><dd>한 사람이 입력·승인·지급을 함께 하지 못하게 나누는 것.</dd>
+    <dt>ITGC</dt><dd>IT 일반통제. 접근권한, 변경관리, 운영 세 영역으로 나뉩니다.</dd>
+    <dt>MCP · 커넥터</dt><dd>AI에게 외부 시스템의 도구를 열어 주는 표준 연결 방식.</dd>
+    <dt>Hook</dt><dd>도구 호출 직전이나 직후에 자동으로 실행되는 검사.</dd>
+    <dt>Policy L1·L2·L3</dt><dd>위험 등급에 따른 처리. 차단, 사람 승인, 경고.</dd>
+    <dt>매입세액 불공제</dt><dd>접대비, 비영업용 승용차 관련 지출 등은 부가세를 내도 공제받지 못합니다.</dd>
+  </dl>
+</section>
+
+<section id="next">
+  <div class="sec-head"><span class="num">11</span><h2>남은 과제</h2></div>
+  <ul class="todo">
+    <li><span class="pill hold">교재 11-3</span><div>홈택스 34건과 ERP 전표의 3-way 대사(기표 누락, 근거 없는 전표, 금액 불일치)와 부가세 영향 계산. 삼일회계법인 건부터 확인합니다.</div></li>
+    <li><span class="pill hold">교재 8-5</span><div>경비전표 검토 Agent로 미결 전표 #20~#79를 승인 전에 검토. 작성자와 다른 승인권자가 승인해야 합니다.</div></li>
+    <li><span class="pill hold">세무</span><div>법인차량 차종을 확인해 주유비 부가세 48,820원 공제 여부를 정하고, 노트북 자산·비용 처리 기준과 워크숍 계정도 정합니다.</div></li>
+    <li><span class="pill hold">수금</span><div>보류한 입금 12건 확인. 특히 뷰티메가리테일 3,374,800,000원(#16), 뷰티메가마트 중복 의심(#38), 선수금 후보(#25·#26).</div></li>
+    <li><span class="pill bad">통제</span><div>FR01 미비점: 자기 승인을 시스템으로 차단, 승인일시를 감사로그에 남기기, 임시 승인권한 회수, 전표 #12 실재성 확인.</div></li>
+    <li><span class="pill ok">Hub</span><div>Claude Code에서 PreToolUse hook으로 금액 임계(L2)와 기간 잠금을 구현하고, ERP 도구 허용 목록을 정리합니다.</div></li>
+  </ul>
+</section>
+
+<footer>
+  실습 환경: edu-erp.co.kr 좌석 stu24 · 교재: 제4기 삼일 AI재무아카데미 실습 교재(/guide) · 이 노트의 숫자는 2026-10-07 실습 중 ERP 커넥터와 모의 홈택스에서 직접 조회한 값입니다.
+</footer>
+</main>
+</div>
+</body>
+</html>
